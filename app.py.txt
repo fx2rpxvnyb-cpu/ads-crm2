@@ -1,0 +1,69 @@
+import streamlit as st
+if st.sidebar.button("Выйти"):
+    st.session_state.logged_in = False
+    st.rerun()
+
+# ====== Данные ======
+if "employees" not in st.session_state:
+    st.session_state.employees = [
+        {"Имя": "Иван Петров", "Должность": "Прораб", "Статус": "На объекте"},
+        {"Имя": "Сергей Кузнецов", "Должность": "Электрик", "Статус": "На складе"},
+    ]
+
+if "tasks" not in st.session_state:
+    st.session_state.tasks = []
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# ====== Разделы ======
+if menu == "Панель":
+    st.title("📊 Панель управления")
+    col1, col2 = st.columns(2)
+    col1.metric("Сотрудников", len(st.session_state.employees))
+    col2.metric("Задач", len(st.session_state.tasks))
+
+elif menu == "Сотрудники":
+    st.title("👥 Сотрудники")
+    st.dataframe(pd.DataFrame(st.session_state.employees), use_container_width=True)
+
+    with st.expander("Добавить сотрудника"):
+        name = st.text_input("Имя")
+        position = st.text_input("Должность")
+        status = st.selectbox("Статус", ["На объекте", "На складе", "Выходной"])
+        if st.button("Добавить сотрудника"):
+            st.session_state.employees.append({
+                "Имя": name,
+                "Должность": position,
+                "Статус": status,
+            })
+            st.success("Сотрудник добавлен")
+            st.rerun()
+
+elif menu == "Задачи":
+    st.title("📋 Задачи")
+
+    task = st.text_input("Новая задача")
+    if st.button("Добавить задачу") and task:
+        st.session_state.tasks.append({
+            "Задача": task,
+            "Дата": datetime.now().strftime("%d.%m.%Y %H:%M")
+        })
+        st.success("Задача создана")
+        st.rerun()
+
+    st.dataframe(pd.DataFrame(st.session_state.tasks), use_container_width=True)
+
+elif menu == "Чат":
+    st.title("💬 Внутренний чат")
+
+    for msg in st.session_state.messages:
+        st.write(f"**{msg['user']}**: {msg['text']}")
+
+    new_msg = st.text_input("Сообщение")
+    if st.button("Отправить") and new_msg:
+        st.session_state.messages.append({
+            "user": st.session_state.username,
+            "text": new_msg,
+        })
+        st.rerun()
