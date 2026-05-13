@@ -1,69 +1,58 @@
 import streamlit as st
-if st.sidebar.button("Выйти"):
-    st.session_state.logged_in = False
-    st.rerun()
+import pandas as pd
+from datetime import datetime
 
-# ====== Данные ======
-if "employees" not in st.session_state:
-    st.session_state.employees = [
-        {"Имя": "Иван Петров", "Должность": "Прораб", "Статус": "На объекте"},
-        {"Имя": "Сергей Кузнецов", "Должность": "Электрик", "Статус": "На складе"},
-    ]
+# ===================== НАСТРОЙКИ =====================
+st.set_page_config(
+    page_title="АДС CRM",
+    page_icon="🏗️",
+    layout="wide"
+)
 
-if "tasks" not in st.session_state:
-    st.session_state.tasks = []
+# ===================== ПОЛЬЗОВАТЕЛИ =====================
+USERS = {
+    "admin": {"password": "admin123", "role": "Администратор"},
+    "director": {"password": "director123", "role": "Директор"},
+}
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# ===================== SESSION STATE =====================
+def init_state():
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
 
-# ====== Разделы ======
-if menu == "Панель":
-    st.title("📊 Панель управления")
-    col1, col2 = st.columns(2)
-    col1.metric("Сотрудников", len(st.session_state.employees))
-    col2.metric("Задач", len(st.session_state.tasks))
+    if "username" not in st.session_state:
+        st.session_state.username = ""
 
-elif menu == "Сотрудники":
-    st.title("👥 Сотрудники")
-    st.dataframe(pd.DataFrame(st.session_state.employees), use_container_width=True)
+    if "role" not in st.session_state:
+        st.session_state.role = ""
 
-    with st.expander("Добавить сотрудника"):
-        name = st.text_input("Имя")
-        position = st.text_input("Должность")
-        status = st.selectbox("Статус", ["На объекте", "На складе", "Выходной"])
-        if st.button("Добавить сотрудника"):
-            st.session_state.employees.append({
-                "Имя": name,
-                "Должность": position,
-                "Статус": status,
-            })
-            st.success("Сотрудник добавлен")
+    if "employees" not in st.session_state:
+        st.session_state.employees = [
+            {"Имя": "Иван Петров", "Должность": "Прораб", "Статус": "На объекте"},
+            {"Имя": "Сергей Кузнецов", "Должность": "Электрик", "Статус": "На складе"},
+        ]
+
+    if "tasks" not in st.session_state:
+        st.session_state.tasks = []
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+init_state()
+
+# ===================== АВТОРИЗАЦИЯ =====================
+if not st.session_state.logged_in:
+    st.title("🔐 Вход в АДС CRM")
+
+    username = st.text_input("Логин")
+    password = st.text_input("Пароль", type="password")
+
+    if st.button("Войти"):
+        if username in USERS and USERS[username]["password"] == password:
+            st.session_state.logged_in = True
+            st.session_state.username = username
+            st.session_state.role = USERS[username]["role"]
+            st.success("Вход выполнен")
             st.rerun()
-
-elif menu == "Задачи":
-    st.title("📋 Задачи")
-
-    task = st.text_input("Новая задача")
-    if st.button("Добавить задачу") and task:
-        st.session_state.tasks.append({
-            "Задача": task,
-            "Дата": datetime.now().strftime("%d.%m.%Y %H:%M")
-        })
-        st.success("Задача создана")
-        st.rerun()
-
-    st.dataframe(pd.DataFrame(st.session_state.tasks), use_container_width=True)
-
-elif menu == "Чат":
-    st.title("💬 Внутренний чат")
-
-    for msg in st.session_state.messages:
-        st.write(f"**{msg['user']}**: {msg['text']}")
-
-    new_msg = st.text_input("Сообщение")
-    if st.button("Отправить") and new_msg:
-        st.session_state.messages.append({
-            "user": st.session_state.username,
-            "text": new_msg,
-        })
-        st.rerun()
+        else:
+            st.warning("Введите сообщение")
